@@ -83,7 +83,6 @@ export default defineConfig(({ command, mode }) => {
     outDir: "../fuzzy_shield/public",
     emptyOutDir: true,
   },
-  base: '/app/'
 }
 })
 

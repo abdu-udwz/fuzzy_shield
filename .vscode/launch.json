@@ -9,14 +9,14 @@
       "name": "Run vite dev",
       "request": "launch",
       "type": "node-terminal",
-      "cwd": "${workspaceFolder}/fuzzy_shield_client"
+      "cwd": "${workspaceFolder}/client"
     },
     {
       "name": "Python: FastAPI Dev",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "cwd": "${workspaceFolder}/fuzzy_shield",
+      "cwd": "${workspaceFolder}/server",
       "args": [
         "fuzzy_shield.main:app",
         "--reload"
