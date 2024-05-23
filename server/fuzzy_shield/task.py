@@ -4,11 +4,13 @@ from uuid import uuid4
 from datetime import datetime
 from pydantic import BaseModel, Field, UUID4, PastDatetime, field_serializer
 
+TASK_STATUS = Literal["queued", "partial", "completed"]
+
 
 class Task(BaseModel):
     task_id: UUID4 = Field(default_factory=lambda: uuid4().hex, frozen=True)
     text: str
-    status: Literal["queued", "completed", "cancelled"] = "queued"
+    status: TASK_STATUS = "queued"
 
     created_at: Annotated[PastDatetime, Field(
         default_factory=datetime.now, frozen=True)]

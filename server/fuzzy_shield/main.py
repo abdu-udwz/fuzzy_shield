@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import Literal, Optional
 from fastapi import FastAPI, WebSocket, Request, HTTPException, BackgroundTasks, Query
 from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fuzzy_shield.task import Task
+from fuzzy_shield.task import Task, TASK_STATUS
 from fuzzy_shield.config import Config
 
 import asyncio
@@ -38,13 +38,15 @@ app.add_middleware(
 
 # Redis connection
 redis_pool = redis.ConnectionPool.from_url(
-    "redis://localhost:6379", decode_responses=True)
+    str(config.redis_url), decode_responses=True)
 
 # Redis channel for task updates
 redis_channel = "task_updates"
 
-# A Redis list to maintain tasks insertion list
-redis_task_list = "fuzzy_tasks"
+# Redis sorted sets to maintain reference for tasks in insertion order and states
+redis_task_set = "fuzzy_tasks"
+redis_completed_task_set = "fuzzy_tasks_completed"
+redis_incomplete_task_set = "fuzzy_tasks_incomplete"
 
 # Process pool for tasks
 process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=4)
@@ -81,8 +83,8 @@ async def reader(channel: redis.client.PubSub):
             updates.put_nowait(update)
 
 
-@app.post("/api/submit_task/")
-async def submit_task(request: Request, background_task: BackgroundTasks):
+@app.post("/api/tasks/")
+async def submit_task(request: Request, background_task: BackgroundTasks) -> Task:
     data = await request.json()
     text = data.get("text")
     if not text:
@@ -95,31 +97,37 @@ async def submit_task(request: Request, background_task: BackgroundTasks):
     task = Task(text=text)
     task_id = task.task_id
     await r.hset(task_id, mapping=task.model_dump())
-    await r.lpush(redis_task_list, task_id)
+    await r.zadd(redis_task_set, {task_id: task.created_at.timestamp()})
+    await r.zadd(redis_incomplete_task_set, {task_id: task.created_at.timestamp()})
 
     # Submit the task to the process pool
-    background_task.add_task(schedule_task, task_id, text)
+    background_task.add_task(schedule_task, task_id)
 
-    return JSONResponse(task.model_dump())
+    return task
 
 
-def schedule_task(task_id, text):
+def schedule_task(task_id):
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
     # future = loop.run_in_executor(None, _process_task, task_id, text)
     # return future.result()
 
-    _process_task(task_id, text)
+    _process_task(task_id)
 
 
-def _process_task(task_id, text):
-    with RedisBlocking.from_url("redis://localhost:6379") as r:
-
+def _process_task(task_id):
+    with RedisBlocking.from_url(str(config.redis_url), decode_responses=True) as r:
+        task_raw = r.hgetall(task_id)
+        task = Task(**task_raw)
         # This is a dummy worker for now - it will be replaced with your algorithms later
         print(f"Processing task {task_id}...")
-        time.sleep(3)  # Simulate some work
+        time.sleep(20)  # Simulate some work
         print(f"Task {task_id} completed.")
         r.hset(task_id, "status", "completed")
+
+        r.zrem(redis_incomplete_task_set, task_id)
+        r.zadd(redis_completed_task_set, {
+               task_id: task.created_at.timestamp()})
 
         # Publish the task update on Redis channel
         r.publish(redis_channel, json.dumps(
@@ -149,13 +157,19 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/api/tasks/", response_model=list[Task])
 async def get_tasks(limit: Optional[int] = Query(default=10, maximum=100),
                     page: Optional[int] = Query(default=0),
-                    status: Optional[str] = None) -> list[Task]:
+                    status: Optional[TASK_STATUS] = None) -> list[Task]:
     r = redis.Redis.from_pool(redis_pool)
 
     lstart = page * limit
     lend = lstart + limit
 
-    ids = await r.lrange(redis_task_list, start=lstart, end=lend)
+    task_set = redis_task_set
+    if status is not None and status != "completed":
+        task_set = redis_incomplete_task_set
+    elif status == 'completed':
+        task_set = redis_completed_task_set
+
+    ids = await r.zrange(task_set, desc=True, start=lstart, end=lend)
     tasks: list[Task] = []
     for task_id in ids:
         task_raw = await r.hgetall(task_id)
