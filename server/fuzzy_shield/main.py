@@ -1,7 +1,10 @@
-from fastapi import FastAPI, WebSocket, Request, HTTPException, BackgroundTasks
+from typing import Optional
+from fastapi import FastAPI, WebSocket, Request, HTTPException, BackgroundTasks, Query
 from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+
+from fuzzy_shield.task import Task
 from fuzzy_shield.config import Config
 
 import asyncio
@@ -26,6 +29,10 @@ redis_pool = redis.ConnectionPool.from_url(
 
 # Redis channel for task updates
 redis_channel = "task_updates"
+
+# A Redis list to maintain tasks insertion list
+redis_task_list = "fuzzy_tasks"
+
 # Process pool for tasks
 process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=4)
 
@@ -69,17 +76,18 @@ async def submit_task(request: Request, background_task: BackgroundTasks):
         raise HTTPException(
             status_code=400, detail="Missing 'text' in request body")
 
-    task_id = str(uuid.uuid4())
     r = redis.Redis.from_pool(redis_pool)
 
     # Store the task in Redis
-    await r.hset(task_id, "status", "queued")
-    await r.hset(task_id, "text", text)
+    task = Task(text=text)
+    task_id = task.task_id
+    await r.hset(task_id, mapping=task.model_dump())
+    await r.lpush(redis_task_list, task_id)
 
     # Submit the task to the process pool
     background_task.add_task(schedule_task, task_id, text)
 
-    return JSONResponse({"task_id": task_id})
+    return JSONResponse(task.model_dump())
 
 
 def schedule_task(task_id, text):
@@ -123,15 +131,37 @@ async def websocket_endpoint(websocket: WebSocket):
         print("WebSocket connection closed")
 
 
+# tasks controller
+
+@app.get("/api/tasks/", response_model=list[Task])
+async def get_tasks(limit: Optional[int] = Query(default=10, maximum=100),
+                    page: Optional[int] = Query(default=0),
+                    status: Optional[str] = None) -> list[Task]:
+    r = redis.Redis.from_pool(redis_pool)
+
+    lstart = page * limit
+    lend = lstart + limit
+
+    ids = await r.lrange(redis_task_list, start=lstart, end=lend)
+    tasks: list[Task] = []
+    for task_id in ids:
+        task_raw = await r.hgetall(task_id)
+        task = Task(**task_raw)
+        tasks.append(task)
+
+    return tasks
+
+
 @app.get("/api/tasks/{task_id}")
-async def get_results(task_id: str):
-    print(task_id, type(task_id))
-    task_data = r.hgetall(task_id)
+async def get_task(task_id: str) -> Task:
+    r = redis.Redis.from_pool(redis_pool)
+    task_data = await r.hgetall(task_id)
 
     if not task_data:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    return JSONResponse(task_data)
+    task = Task(**task_data)
+    return task
 
 
 class SPAStaticFiles(StaticFiles):
