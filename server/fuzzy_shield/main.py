@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, Request, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+from fuzzy_shield.config import Config
 
 import asyncio
 from redis import Redis as RedisBlocking
@@ -12,14 +13,17 @@ import time
 import concurrent.futures
 import logging
 
+config = Config()
+# print(config.model_dump())
+
 logger = logging.getLogger("fuzzy_shield_app")
 
 app = FastAPI()
 
 # Redis connection
-redis_pool = redis.ConnectionPool.from_url("redis://localhost:6379")
+redis_pool = redis.ConnectionPool.from_url(
+    "redis://localhost:6379", decode_responses=True)
 
-# r = Redis(host='localhost', port=6379, decode_responses=True)
 # Redis channel for task updates
 redis_channel = "task_updates"
 # Process pool for tasks
@@ -42,8 +46,8 @@ async def initialize_redis():
 
 @app.on_event('shutdown')
 async def process_shutdown():
+    await redis_pool.disconnect()
     process_pool.shutdown()
-    redis_pool.disconnect()
 
 
 async def reader(channel: redis.client.PubSub):
