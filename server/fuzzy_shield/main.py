@@ -3,7 +3,7 @@ from fastapi import FastAPI, WebSocket, Request, HTTPException, BackgroundTasks,
 from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-
+from fastapi.middleware.cors import CORSMiddleware
 from fuzzy_shield.task import Task
 from fuzzy_shield.config import Config
 
@@ -11,17 +11,30 @@ import asyncio
 from redis import Redis as RedisBlocking
 import redis.asyncio as redis
 import json
-import uuid
 import time
 import concurrent.futures
 import logging
 
 config = Config()
-# print(config.model_dump())
+
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+]
+
 
 logger = logging.getLogger("fuzzy_shield_app")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Redis connection
 redis_pool = redis.ConnectionPool.from_url(
