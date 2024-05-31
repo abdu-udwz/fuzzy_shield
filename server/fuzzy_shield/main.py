@@ -48,6 +48,8 @@ redis_task_set = "fuzzy_tasks"
 redis_completed_task_set = "fuzzy_tasks_completed"
 redis_incomplete_task_set = "fuzzy_tasks_incomplete"
 
+redis_collection_prefix = "fuzzy_collection_"
+
 # Process pool for tasks
 process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=4)
 
@@ -87,6 +89,7 @@ async def reader(channel: redis.client.PubSub):
 async def submit_task(request: Request, background_task: BackgroundTasks) -> Task:
     data = await request.json()
     text = data.get("text")
+    collection = data.get("collection")
     if not text:
         raise HTTPException(
             status_code=400, detail="Missing 'text' in request body")
@@ -95,10 +98,15 @@ async def submit_task(request: Request, background_task: BackgroundTasks) -> Tas
 
     # Store the task in Redis
     task = Task(text=text)
+    if collection:
+        task.collection = collection
     task_id = task.task_id
     await r.hset(task_id, mapping=task.model_dump())
     await r.zadd(redis_task_set, {task_id: task.created_at.timestamp()})
     await r.zadd(redis_incomplete_task_set, {task_id: task.created_at.timestamp()})
+    if task.collection is not None:
+        await r.zadd(f'{redis_collection_prefix}{task.collection}', {task_id: task.created_at.timestamp()})
+        await r.zadd(f'{redis_collection_prefix}{task.collection}_incomplete', {task_id: task.created_at.timestamp()})
 
     # Submit the task to the process pool
     background_task.add_task(schedule_task, task_id)
@@ -129,6 +137,12 @@ def _process_task(task_id):
         r.zadd(redis_completed_task_set, {
                task_id: task.created_at.timestamp()})
 
+        if task.collection:
+            r.zrem(
+                f'{redis_collection_prefix}{task.collection}_incomplete', task_id)
+            r.zadd(f'{redis_collection_prefix}{task.collection}_completed', {
+                task_id: task.created_at.timestamp()})
+
         # Publish the task update on Redis channel
         r.publish(redis_channel, json.dumps(
             {"task_id": task_id, "status": "completed"}))
@@ -157,17 +171,18 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/api/tasks/", response_model=list[Task])
 async def get_tasks(limit: Optional[int] = Query(default=10, maximum=100),
                     page: Optional[int] = Query(default=0),
-                    status: Optional[TASK_STATUS] = None) -> list[Task]:
+                    status: Optional[TASK_STATUS] = None,
+                    collection: Optional[str] = None) -> list[Task]:
     r = redis.Redis.from_pool(redis_pool)
 
     lstart = page * limit
     lend = lstart + limit
 
-    task_set = redis_task_set
+    task_set = redis_task_set if not collection else f'{redis_collection_prefix}{collection}'
     if status is not None and status != "completed":
-        task_set = redis_incomplete_task_set
+        task_set = redis_incomplete_task_set if not collection else f'{redis_collection_prefix}{collection}_incomplete'
     elif status == 'completed':
-        task_set = redis_completed_task_set
+        task_set = redis_completed_task_set if not collection else f'{redis_collection_prefix}{collection}_completed'
 
     ids = await r.zrange(task_set, desc=True, start=lstart, end=lend)
     tasks: list[Task] = []
@@ -189,6 +204,14 @@ async def get_task(task_id: str) -> Task:
 
     task = Task(**task_data)
     return task
+
+
+# collection
+@app.get('/api/collections/')
+async def get_collections():
+    r = redis.Redis.from_pool(redis_pool)
+    collections: list[str] = await r.keys(f'{redis_collection_prefix}*')
+    return [collection.replace(redis_collection_prefix, '') for collection in collections]
 
 
 class SPAStaticFiles(StaticFiles):
