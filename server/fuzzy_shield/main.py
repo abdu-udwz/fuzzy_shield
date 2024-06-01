@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fuzzy_shield.task import Task, TASK_STATUS
+from fuzzy_shield.task import Task, TaskCollectionResponse, TASK_STATUS
 from fuzzy_shield.config import Config
 
 import asyncio
@@ -168,11 +168,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
 # tasks controller
 
-@app.get("/api/tasks/", response_model=list[Task])
+
+@app.get("/api/tasks/", response_model=TaskCollectionResponse)
 async def get_tasks(limit: Optional[int] = Query(default=10, maximum=100),
                     page: Optional[int] = Query(default=0),
                     status: Optional[TASK_STATUS] = None,
-                    collection: Optional[str] = None) -> list[Task]:
+                    collection: Optional[str] = None) -> TaskCollectionResponse:
     r = redis.Redis.from_pool(redis_pool)
 
     lstart = page * limit
@@ -191,7 +192,9 @@ async def get_tasks(limit: Optional[int] = Query(default=10, maximum=100),
         task = Task(**task_raw)
         tasks.append(task)
 
-    return tasks
+    task_count = await r.zcount(task_set, '-inf', '+inf')
+
+    return TaskCollectionResponse(tasks=tasks, count=task_count)
 
 
 @app.get("/api/tasks/{task_id}")
@@ -211,6 +214,8 @@ async def get_task(task_id: str) -> Task:
 async def get_collections():
     r = redis.Redis.from_pool(redis_pool)
     collections: list[str] = await r.keys(f'{redis_collection_prefix}*')
+    collections = list(filter(lambda collection: not (collection.endswith(
+        '_incomplete') or collection.endswith('_completed')), collections))
     return [collection.replace(redis_collection_prefix, '') for collection in collections]
 
 

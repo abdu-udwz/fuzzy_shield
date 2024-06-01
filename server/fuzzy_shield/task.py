@@ -22,3 +22,8 @@ class Task(BaseModel):
     @field_serializer('created_at', when_used='always')
     def serilize_created_at(self, created_at: datetime):
         return created_at.isoformat()
+
+
+class TaskCollectionResponse(BaseModel):
+    tasks: list[Task]
+    count: int
