@@ -1,18 +1,16 @@
+import json
+import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, Request, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fuzzy_shield.routers import api_router
-from fuzzy_shield.task import Task
+from fuzzy_shield.services.queues import EXTERNAL_UPDATES_QUEUE
 from fuzzy_shield.config import Config
-
-import redis.asyncio as redis
-import json
-import logging
 from fuzzy_shield import dependencies
-from fuzzy_shield.dependencies.redis import RedisUpdatesQueueDep
+from fuzzy_shield import services
 
 config = Config()
 
@@ -26,7 +24,9 @@ origins = [
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await dependencies.on_startup(app)
+    services.on_startup(app)
     yield
+    services.on_shutdown(app)
     await dependencies.on_shutdown(app)
 
 logger = logging.getLogger("fuzzy_shield_app")
@@ -44,16 +44,16 @@ app.add_middleware(
 
 
 @app.websocket("/api/ws/")
-async def websocket_endpoint(websocket: WebSocket, updates_queue=RedisUpdatesQueueDep):
+async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         await websocket.send_text("Connection established!")
 
         while True:
             # print(f"received text from websocket {data}")
-            update = await updates_queue.get()
+            update = await EXTERNAL_UPDATES_QUEUE.get()
             await websocket.send_text(json.dumps(update))
-            updates_queue.task_done()
+            EXTERNAL_UPDATES_QUEUE.task_done()
 
     except WebSocketDisconnect:
         print("WebSocket connection closed")

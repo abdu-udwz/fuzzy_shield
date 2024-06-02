@@ -7,6 +7,7 @@ import redis.asyncio as redis
 from fastapi import Depends
 from fuzzy_shield import RedisSets
 from fuzzy_shield.config import Config
+from fuzzy_shield.services.queues import INTERNAL_UPDATES_QUEUE
 
 config = Config()
 
@@ -46,8 +47,6 @@ async def uninitialize_redis():
     _app_running = False
     await redis_pool.disconnect()
 
-updates = asyncio.Queue()
-
 
 async def reader(channel: redis.client.PubSub):
     while True and _app_running:
@@ -58,9 +57,9 @@ async def reader(channel: redis.client.PubSub):
             logger.info(
                 f'Received update on task from queue {message["data"]}')
             update = json.loads(message["data"])
-            updates.put_nowait(update)
+            INTERNAL_UPDATES_QUEUE.put_nowait(update)
     else:
-        logger.info('')
+        logger.info('Redis update loop exited')
 
 
 def get_redis():
@@ -75,10 +74,3 @@ def get_redis_sets():
 
 
 RedisSetsDep = Annotated[RedisSets, Depends(get_redis_sets)]
-
-
-def get_updates_queue():
-    return updates
-
-
-RedisUpdatesQueueDep = Annotated[asyncio.Queue, Depends(get_updates_queue)]
