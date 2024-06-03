@@ -1,17 +1,27 @@
 import time
-import json
 import concurrent.futures
+import pandas as pd
+import pathlib
 
 from redis import Redis as RedisBlocking
 from fastapi import FastAPI
-from fuzzy_shield import RedisSets
+from fuzzy_shield import ALGORITHMS
 from fuzzy_shield.task import Task
 from fuzzy_shield.config import Config
 from fuzzy_shield.services import status_updater
+from fuzzy_shield.services import scorer
 
 config = Config()
 # Process pool for tasks
 process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=4)
+
+sqli_path = pathlib.Path('./datasets/out/sqli-malicious.csv')
+if not sqli_path.exists():
+    exit(1)
+    raise Exception(f"dataset file does not exists {sqli_path}")
+
+
+sqli_set = pd.read_csv(sqli_path)["Query"]
 
 
 def on_startup(app: FastAPI):
@@ -24,20 +34,20 @@ def on_shutdown(app: FastAPI):
 
 
 def schedule_task(task_id):
-    process_pool.submit(_process_task, task_id)
-    # _process_task(task_id)
-
-
-def _process_task(task_id):
+    print(f"Processing task {task_id}...")
     with RedisBlocking.from_url(str(config.redis_url), decode_responses=True) as r:
         task_raw = r.hgetall(task_id)
-        # This is a dummy worker for now - it will be replaced with your algorithms later
-        print(f"Processing task {task_id}...")
-        time.sleep(20)  # Simulate some work
-        print(f"Task {task_id} completed.")
+        task = Task(**task_raw)
 
-        # Publish the task update on Redis channel
-        r.publish("task_updates", json.dumps(
-            {"task_id": task_id, "status": "completed"}))
+        algos = ALGORITHMS.keys()
 
-        # ... [Here's where you'll call your fuzzy matching algorithms] ...
+        for algo in algos:
+            if task.sqli and getattr(task, algo):
+                f = process_pool.submit(
+                    getattr(scorer, algo), task.text, sqli_set, task_id=task_id, is_sqli=True, algo=algo)
+                f.add_done_callback(handle_task_finished)
+
+
+def handle_task_finished(worker_future: concurrent.futures.Future):
+    if worker_future.exception():
+        raise worker_future.exception()
