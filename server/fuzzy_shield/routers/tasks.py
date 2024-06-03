@@ -59,7 +59,12 @@ async def submit_task(request: Request, background_task: BackgroundTasks, r: Red
             status_code=400, detail="Missing 'text' in request body")
 
     # Store the task in Redis
-    task = Task(text=text)
+    task = Task(text=text,
+                sqli=data.get("sqli", 1), xss=data.get("xss", 1),
+                hamming=data.get("hamming", 1),
+                naive=data.get("naive", 1),
+                levenshtein_ratio=data.get("levenshtein_ratio", 1),
+                levenshtein_sort=data.get("levenshtein_sort", 1))
     if collection:
         task.collection = collection
     task_id = task.task_id

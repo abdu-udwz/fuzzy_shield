@@ -3,6 +3,13 @@ import sys
 import logging
 collection_prefix = "fuzzy_collection_"
 
+ALGORITHMS = {
+    "hamming": "Hamming distance",
+    "naive": "Naive Algo",
+    "levenshtein_ratio": "Levenshtein ratio",
+    "levenshtein_sort": "Levenshtein sort"
+}
+
 
 class RedisSets:
     main = "fuzzy_tasks"
@@ -10,6 +17,8 @@ class RedisSets:
     main_completed = 'fuzzy_tasks_incomplete'
 
     collection_prefix = 'fuzzy_collection_'
+
+    updates_channel = "task_updates"
 
     @staticmethod
     def collection(name: str): return f'{collection_prefix}{name}'
