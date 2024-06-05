@@ -1,5 +1,4 @@
 import asyncio
-import json
 from redis.asyncio import Redis
 
 from fuzzy_shield import RedisSets, ALGORITHMS
@@ -47,21 +46,21 @@ async def loop():
             await r.hset(task_id, "status", new_status)
 
             if new_status == 'completed':
-                r.zrem(RedisSets.main_incomplete, task_id)
-                r.zadd(RedisSets.main_completed, {
+                await r.zrem(RedisSets.main_incomplete, task_id)
+                await r.zadd(RedisSets.main_completed, {
                     task_id: task.created_at.timestamp()})
 
                 if task.collection:
-                    r.zrem(
+                    await r.zrem(
                         RedisSets.collection_incomplete(task.collection), task_id)
-                    r.zadd(RedisSets.collection_completed(task.collection), {
+                    await r.zadd(RedisSets.collection_completed(task.collection), {
                         task_id: task.created_at.timestamp()})
 
             if new_status != task.status:
-                EXTERNAL_UPDATES_QUEUE.put_nowait(json.dumps({
+                EXTERNAL_UPDATES_QUEUE.put_nowait({
                     "task_id": task_id,
                     "status": new_status
-                }))
+                })
 
             INTERNAL_UPDATES_QUEUE.task_done()
         except Exception as exc:
