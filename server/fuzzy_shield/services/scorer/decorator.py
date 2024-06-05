@@ -19,6 +19,8 @@ def with_redis(func):
         algo = kwargs["algo"]
         score, time, cpu, memory = func(*args, **kwargs)
 
+        time = time * 1000
+
         type_slug = 'sqli' if is_sqli else 'xss'
         redis_instance.publish(RedisSets.updates_channel, json.dumps(
             {

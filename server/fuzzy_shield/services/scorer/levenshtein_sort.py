@@ -1,7 +1,6 @@
 import time
 from thefuzz import fuzz, process
 from .decorator import with_redis
-from redis import Redis
 
 
 @with_redis
