@@ -1,6 +1,8 @@
 import json
 import logging
+import traceback
 from contextlib import asynccontextmanager
+from asyncio.queues import QueueEmpty
 
 from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketDisconnect
@@ -47,16 +49,17 @@ app.add_middleware(
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
-        await websocket.send_text("Connection established!")
-
         while True:
-            # print(f"received text from websocket {data}")
             update = await EXTERNAL_UPDATES_QUEUE.get()
             await websocket.send_text(json.dumps(update))
             EXTERNAL_UPDATES_QUEUE.task_done()
 
-    except WebSocketDisconnect:
-        print("WebSocket connection closed")
+    except WebSocketDisconnect as err:
+        print("WebSocketConnection closed")
+        print(traceback.format_exc())
+        print('sss', err, err.reason, err.code, err.args)
+    except Exception as err:
+        print('Something went wrong', err)
 
 
 class SPAStaticFiles(StaticFiles):
