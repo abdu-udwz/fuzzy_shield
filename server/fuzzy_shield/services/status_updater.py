@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from redis.asyncio import Redis
 
 from fuzzy_shield import RedisSets, ALGORITHMS
@@ -6,8 +7,9 @@ from fuzzy_shield.dependencies.redis import redis_pool
 from fuzzy_shield.task import Task, TASK_STATUS
 from .queues import INTERNAL_UPDATES_QUEUE, EXTERNAL_UPDATES_QUEUE
 
-_app_running = False
+logger = logging.getLogger('status_updater')
 
+_app_running = False
 
 loop_task = None
 
@@ -33,7 +35,7 @@ async def loop():
     while True and _app_running:
         try:
             update = await INTERNAL_UPDATES_QUEUE.get()
-            print('Internal status updater', update)
+            logger.debug(f'Internal status updater {update}')
             task_id = update["task_id"]
 
             await r.hset(task_id, mapping=update)
@@ -64,8 +66,8 @@ async def loop():
 
             INTERNAL_UPDATES_QUEUE.task_done()
         except Exception as exc:
-            print("Something went wrong while handling internal status updates")
-            print(exc)
+            logger.exception(
+                "Something went wrong while handling internal status updates")
 
 
 def compute_task_status(task: Task) -> TASK_STATUS:

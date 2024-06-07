@@ -14,7 +14,6 @@ config = Config()
 
 logger = logging.getLogger("redis#dependency")
 
-
 # Redis channel for task updates
 redis_channel = "task_updates"
 
@@ -54,7 +53,7 @@ async def reader(channel: redis.client.PubSub):
         message = await channel.get_message(ignore_subscribe_messages=True, timeout=None)
         if message and message["type"] == "message":
             # Received a task update
-            logger.info(
+            logger.debug(
                 f'Received update on task from queue {message["data"]}')
             update = json.loads(message["data"])
             INTERNAL_UPDATES_QUEUE.put_nowait(update)

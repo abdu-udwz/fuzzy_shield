@@ -1,6 +1,7 @@
 
 import sys
 import logging
+
 collection_prefix = "fuzzy_collection_"
 
 ALGORITHMS = {
@@ -33,8 +34,7 @@ class RedisSets:
 
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.DEBUG,
     handlers=[
         logging.StreamHandler(sys.stdout)
     ]
