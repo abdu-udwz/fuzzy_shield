@@ -11,6 +11,8 @@ import RecentTasks from '@/components/RecentTasks.vue';
     >
       <TaskFormForm />
 
+      <TaskCard class="my-2" />
+
       <RecentTasks />
     </VResponsive>
   </VContainer>

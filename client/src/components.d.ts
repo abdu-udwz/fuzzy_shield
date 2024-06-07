@@ -8,11 +8,16 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
+    MemorySizeChip: typeof import('./components/MemorySizeChip.vue')['default']
+    QueryForm: typeof import('./components/QueryForm.vue')['default']
     RecentTasks: typeof import('./components/RecentTasks.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScoreProgress: typeof import('./components/ScoreProgress.vue')['default']
+    TaskCard: typeof import('./components/TaskCard.vue')['default']
     TaskForm: typeof import('./components/TaskForm.vue')['default']
+    TaskResultGrid: typeof import('./components/TaskResultGrid.vue')['default']
+    TimeChip: typeof import('./components/TimeChip.vue')['default']
     VApp: typeof import('vuetify/components')['VApp']
     VCard: typeof import('vuetify/components')['VCard']
     VCardActions: typeof import('vuetify/components')['VCardActions']
