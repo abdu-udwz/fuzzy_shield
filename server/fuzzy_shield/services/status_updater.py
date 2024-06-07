@@ -90,7 +90,7 @@ def compute_task_status(task: Task) -> TASK_STATUS:
             one_done = True
             algo_state[algo]['sqli'] = True
 
-        if task.sqli and getattr(task, f"{algo}_xss_time"):
+        if task.xss and getattr(task, f"{algo}_xss_time"):
             one_done = True
             algo_state[algo]['xss'] = True
 
