@@ -11,11 +11,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fuzzy_shield.routers import api_router
 from fuzzy_shield.services.queues import EXTERNAL_UPDATES_QUEUE
 from fuzzy_shield.config import Config
+from fuzzy_shield import data
 from fuzzy_shield import dependencies
 from fuzzy_shield import services
 
 config = Config()
+logger = logging.getLogger("fuzzy_shield_app")
 
+# prepare datasets
+data.initialize()
+
+#
 
 origins = [
     "http://localhost",
@@ -31,7 +37,6 @@ async def lifespan(app: FastAPI):
     services.on_shutdown(app)
     await dependencies.on_shutdown(app)
 
-logger = logging.getLogger("fuzzy_shield_app")
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(api_router)

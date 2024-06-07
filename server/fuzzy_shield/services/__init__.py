@@ -15,17 +15,28 @@ config = Config()
 # Process pool for tasks
 process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=4)
 
-sqli_path = pathlib.Path('./datasets/out/sqli-malicious.csv')
-if not sqli_path.exists():
-    exit(1)
-    raise Exception(f"dataset file does not exists {sqli_path}")
 
-
-sqli_set = pd.read_csv(sqli_path)["Query"]
+sqli_set: list[str] | None = None
+xss_set: list[str] | None = None
 
 
 def on_startup(app: FastAPI):
     status_updater.initialize()
+
+    sqli_path = pathlib.Path('./datasets/out/sqli-malicious.csv')
+    xss_path = pathlib.Path('./datasets/out/xss-malicious.csv')
+
+    if not sqli_path.exists():
+        print(f"SQLi dataset file does not exists {sqli_path}")
+        exit(1)
+
+    if not xss_path.exists():
+        print(f"XSS dataset file does not exists {xss_path}")
+        exit(1)
+    global sqli_set, xss_set
+
+    sqli_set = pd.read_csv(sqli_path)["Query"]
+    xss_set = pd.read_csv(xss_path)["Sentence"]
 
 
 def on_shutdown(app: FastAPI):
@@ -52,6 +63,11 @@ def schedule_task(task: Task):
             if task.sqli and getattr(task, algo):
                 f = process_pool.submit(
                     getattr(scorer, algo), task.text, sqli_set, task_id=task_id, is_sqli=True, algo=algo)
+                f.add_done_callback(handle_task_finished)
+
+            if task.xss and getattr(task, algo):
+                f = process_pool.submit(
+                    getattr(scorer, algo), task.text, xss_set, task_id=task_id, is_sqli=False, algo=algo)
                 f.add_done_callback(handle_task_finished)
 
 
