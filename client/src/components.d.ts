@@ -12,6 +12,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScoreProgress: typeof import('./components/ScoreProgress.vue')['default']
+    TaskForm: typeof import('./components/TaskForm.vue')['default']
     VApp: typeof import('vuetify/components')['VApp']
     VCard: typeof import('vuetify/components')['VCard']
     VCardActions: typeof import('vuetify/components')['VCardActions']
