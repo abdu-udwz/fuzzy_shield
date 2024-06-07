@@ -4,7 +4,7 @@ import { useCollectionsStore } from "./collections";
 import { useTasksStore } from "./tasks";
 import { submitTask as apiSubmitTask } from "@/services/tasks";
 import type { TaskStatus } from "@/interfaces/task";
-import { type ScorerAlgorithm} from '@/composables/algorithms'
+import { type ScorerAlgorithm } from "@/composables/algorithms";
 
 export const useTaskFormStore = defineStore("taskForm", () => {
   const collectionsStore = useCollectionsStore();
@@ -14,16 +14,18 @@ export const useTaskFormStore = defineStore("taskForm", () => {
   const collection = useLocalStorage("form.collection", "");
   const designatedResult = useLocalStorage("form.designatedResult", false);
 
-  const attackType = useLocalStorage("form.attackType", ['sqli','xss']);
-
+  const attackType = useLocalStorage("form.attackType", ["sqli", "xss"]);
 
   const taskStatus: TaskStatus[] = ["queued", "partial", "completed"];
-  const algorithmSelection = useLocalStorage<Record<ScorerAlgorithm, boolean>>('form.selection', {
-    hamming: true,
-    naive: true,
-    levenshtein_ratio: true,
-    levenshtein_sort: true
-  })
+  const algorithmSelection = useLocalStorage<Record<ScorerAlgorithm, boolean>>(
+    "form.selection",
+    {
+      hamming: true,
+      naive: true,
+      levenshtein_ratio: true,
+      levenshtein_sort: true,
+    }
+  );
 
   const submitting = ref(false);
   async function submitTask() {
@@ -32,8 +34,8 @@ export const useTaskFormStore = defineStore("taskForm", () => {
       collection: collection.value,
       designated_result: designatedResult.value,
 
-      sqli: attackType.value.includes('sqli'),
-      xss: attackType.value.includes('xss'),
+      sqli: attackType.value.includes("sqli"),
+      xss: attackType.value.includes("xss"),
 
       hamming: algorithmSelection.value.hamming,
       naive: algorithmSelection.value.naive,
@@ -43,6 +45,7 @@ export const useTaskFormStore = defineStore("taskForm", () => {
 
     // refresh collections
     void collectionsStore.fetch();
+    void tasksStore.fetchTasks();
 
     if (error.value) {
       throw error.value;
