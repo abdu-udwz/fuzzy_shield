@@ -1,8 +1,9 @@
-from typing import Literal, Optional
+from typing import Optional
 from fastapi import Request, HTTPException, BackgroundTasks, Query
 from fastapi import APIRouter
 
 from fuzzy_shield.services import schedule_task
+from fuzzy_shield.data import bulk_schedule_sample
 from fuzzy_shield.dependencies.redis import RedisDep, RedisSetsDep
 from fuzzy_shield.task import Task, TaskCollectionResponse, TASK_STATUS
 
@@ -71,3 +72,10 @@ async def submit_task(request: Request, background_task: BackgroundTasks, r: Red
     background_task.add_task(schedule_task, task)
 
     return task
+
+
+# bulk submit sample tasks
+
+@router.post('/bulk')
+async def schedule_sample() -> None:
+    bulk_schedule_sample()
