@@ -58,7 +58,6 @@ async def submit_task(request: Request, background_task: BackgroundTasks, r: Red
         raise HTTPException(
             status_code=400, detail="Missing 'text' in request body")
 
-    # Store the task in Redis
     task = Task(text=text,
                 sqli=data.get("sqli", 1), xss=data.get("xss", 1),
                 hamming=data.get("hamming", 1),
@@ -67,15 +66,8 @@ async def submit_task(request: Request, background_task: BackgroundTasks, r: Red
                 levenshtein_sort=data.get("levenshtein_sort", 1))
     if collection:
         task.collection = collection
-    task_id = task.task_id
-    await r.hset(task_id, mapping=task.model_dump())
-    await r.zadd(sets.main, {task_id: task.created_at.timestamp()})
-    await r.zadd(sets.main_incomplete, {task_id: task.created_at.timestamp()})
-    if task.collection is not None:
-        await r.zadd(sets.collection(task.collection), {task_id: task.created_at.timestamp()})
-        await r.zadd(sets.collection_incomplete(task.collection), {task_id: task.created_at.timestamp()})
 
     # Submit the task to the process pool
-    background_task.add_task(schedule_task, task_id)
+    background_task.add_task(schedule_task, task)
 
     return task

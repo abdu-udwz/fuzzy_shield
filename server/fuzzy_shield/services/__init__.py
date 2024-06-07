@@ -5,7 +5,7 @@ import pathlib
 
 from redis import Redis as RedisBlocking
 from fastapi import FastAPI
-from fuzzy_shield import ALGORITHMS
+from fuzzy_shield import ALGORITHMS, RedisSets as sets
 from fuzzy_shield.task import Task
 from fuzzy_shield.config import Config
 from fuzzy_shield.services import status_updater
@@ -33,11 +33,18 @@ def on_shutdown(app: FastAPI):
     process_pool.shutdown()
 
 
-def schedule_task(task_id):
+def schedule_task(task: Task):
+    task_id = task.task_id
     print(f"Processing task {task_id}...")
     with RedisBlocking.from_url(str(config.redis_url), decode_responses=True) as r:
-        task_raw = r.hgetall(task_id)
-        task = Task(**task_raw)
+        r.hset(task_id, mapping=task.model_dump())
+        r.zadd(sets.main, {task_id: task.created_at.timestamp()})
+        r.zadd(sets.main_incomplete, {task_id: task.created_at.timestamp()})
+        if task.collection is not None:
+            r.zadd(sets.collection(task.collection), {
+                   task_id: task.created_at.timestamp()})
+            r.zadd(sets.collection_incomplete(task.collection),
+                   {task_id: task.created_at.timestamp()})
 
         algos = ALGORITHMS.keys()
 
