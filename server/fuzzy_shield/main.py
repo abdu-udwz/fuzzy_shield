@@ -18,10 +18,10 @@ from fuzzy_shield import services
 config = Config()
 logger = logging.getLogger("fuzzy_shield_app")
 
-# prepare datasets
+# Prepare datasets
 data.initialize()
 
-#
+# Webserver initialization
 
 origins = [
     "http://localhost",
