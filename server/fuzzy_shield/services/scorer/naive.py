@@ -1,4 +1,5 @@
 import time
+import tracemalloc
 from .decorator import with_redis
 from thefuzz import fuzz, process
 from thefuzz.utils import full_process
@@ -6,14 +7,20 @@ from thefuzz.utils import full_process
 
 @with_redis
 def score(query: str, choices: list[str], **kwargs) -> tuple[float, float, float, float]:
+    tracemalloc.start()
     start_time = time.time()
     result = process.extractOne(query, choices, scorer=naive_pattern_scorer)
     end_time = time.time()
-    execution_time = end_time - start_time
-    if result:
-        return (result[1], execution_time, 0, 0)
+    current_mem, peak_mem = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
 
-    return (result, execution_time, 0, 0)
+    execution_time = end_time - start_time
+
+    match_score = 0
+    if result:
+        match_score = result[1]
+
+    return (match_score, execution_time, 0, peak_mem)
 
 
 def naive_pattern_match(text, pattern):

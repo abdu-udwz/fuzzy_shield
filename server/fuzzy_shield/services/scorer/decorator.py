@@ -26,7 +26,9 @@ def with_redis(func):
             {
                 "task_id": task_id,
                 f"{algo}_{type_slug}_score": score,
-                f"{algo}_{type_slug}_time": time
+                f"{algo}_{type_slug}_time": time,
+                f"{algo}_{type_slug}_cpu": cpu,
+                f"{algo}_{type_slug}_memory": memory
             }))
 
     return wrapper
