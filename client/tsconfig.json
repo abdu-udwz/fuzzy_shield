@@ -25,7 +25,10 @@
     "skipLibCheck": true
   },
   "include": [
-    "./src/typed-router.d.ts"
+    "src/typed-router.d.ts",
+    "src/components.d.ts",
+    "src/**/*.ts",
+    "src/**/*.vue",
   ],
   "exclude": ["dist", "node_modules", "cypress"],
   "references": [{ "path": "./tsconfig.node.json" }],

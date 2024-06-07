@@ -75,12 +75,13 @@ export default defineConfig(({ command, mode }) => {
       '/api': {
         target: serverBaseURL,
         changeOrigin: true,
-        secure: false
+        secure: false,
+        ws: true,
       }
     }
   },
   build: {
-    outDir: "../fuzzy_shield/public",
+    outDir: "../server/public",
     emptyOutDir: true,
   },
 }
@@ -100,11 +101,11 @@ function createServerConfig({ command, mode }: ConfigEnv) {
     }
 
     if (SERVER_BASE_PATH == null) {
-      SERVER_BASE_PATH = '/'
+      SERVER_BASE_PATH = ''
     }
 
     if (SERVER_API_PATH == null) {
-      SERVER_API_PATH = '/'
+      SERVER_API_PATH = ''
     }
 
     // prepare server urls
