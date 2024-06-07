@@ -11,5 +11,16 @@ declare module 'vue' {
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    VApp: typeof import('vuetify/components')['VApp']
+    VCard: typeof import('vuetify/components')['VCard']
+    VCardActions: typeof import('vuetify/components')['VCardActions']
+    VCardText: typeof import('vuetify/components')['VCardText']
+    VCol: typeof import('vuetify/components')['VCol']
+    VForm: typeof import('vuetify/components')['VForm']
+    VIcon: typeof import('vuetify/components')['VIcon']
+    VMain: typeof import('vuetify/components')['VMain']
+    VProgressCircular: typeof import('vuetify/components')['VProgressCircular']
+    VResponsive: typeof import('vuetify/components')['VResponsive']
+    VRow: typeof import('vuetify/components')['VRow']
   }
 }

@@ -1,6 +1,7 @@
 // Plugins
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
+import { Vuetify3Resolver } from 'unplugin-vue-components/resolvers'
 import Fonts from 'unplugin-fonts/vite'
 import Layouts from 'vite-plugin-vue-layouts'
 import Vue from '@vitejs/plugin-vue'
@@ -37,14 +38,17 @@ export default defineConfig(({ command, mode }) => {
     }),
     Components({
       dts: 'src/components.d.ts',
+      resolvers: [
+        Vuetify3Resolver()
+      ]
     }),
     Vue({
       template: { transformAssetUrls },
     }),
     // https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin#readme
-    Vuetify({
-      autoImport: true,
-    }),
+    // Vuetify({
+    //   autoImport: true,
+    // }),
     Fonts({
       google: {
         families: [ {
