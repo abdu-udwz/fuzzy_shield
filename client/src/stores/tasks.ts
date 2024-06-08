@@ -12,6 +12,13 @@ export const useTasksStore = defineStore("tasks", () => {
   const taskCount = ref<number>(10);
   const loading = ref(false);
 
+  const tasksMap = computed(() => {
+    const map: Map<string, TaskRaw> = new Map(
+      tasks.value.map((task) => [task.task_id, task])
+    );
+    return map;
+  });
+
   const status = ref<TaskStatus | null>(null);
   const collection = ref<string | null>(null);
   const page = ref(1);
@@ -33,6 +40,14 @@ export const useTasksStore = defineStore("tasks", () => {
     if (data.value != null) {
       tasks.value = data.value.tasks;
       taskCount.value = data.value.count;
+
+      tasks.value.map((task) =>
+        console.log(
+          task.task_id,
+          task.levenshtein_sort_sqli_score,
+          task.levenshtein_sort_sqli_cpu
+        )
+      );
     }
     loading.value = false;
   }
@@ -59,10 +74,10 @@ export const useTasksStore = defineStore("tasks", () => {
         if (activeTask.value?.task_id == update.task_id) {
           Object.assign(activeTask.value, update);
         }
-        for (const task of tasks.value) {
-          if (task.task_id === update.task_id) {
-            Object.assign(task, update);
-          }
+
+        const taskInList = tasksMap.value.get(update.task_id);
+        if (taskInList) {
+          Object.assign(taskInList, update);
         }
       } catch (error: any) {
         console.error(
