@@ -40,14 +40,6 @@ export const useTasksStore = defineStore("tasks", () => {
     if (data.value != null) {
       tasks.value = data.value.tasks;
       taskCount.value = data.value.count;
-
-      tasks.value.map((task) =>
-        console.log(
-          task.task_id,
-          task.levenshtein_sort_sqli_score,
-          task.levenshtein_sort_sqli_cpu
-        )
-      );
     }
     loading.value = false;
   }
