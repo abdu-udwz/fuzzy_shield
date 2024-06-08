@@ -26,7 +26,7 @@ const textDialog = ref(false)
   <VExpandTransition>
     <VCard v-if="activeTask != null">
       <VCardText>
-        <VRow>
+        <VRow dense>
           <!-- info col -->
           <VCol md="2">
             <VDefaultsProvider

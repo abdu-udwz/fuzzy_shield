@@ -158,8 +158,9 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
   text-align: center;
 }
 
-.task-result-grid tr th:first-child,
-.task-result-grid tr td:first-child {
+.task-result-grid tr th,
+.task-result-grid tr td {
   padding: 0 4px 0 !important;
 }
+
 </style>
