@@ -123,7 +123,14 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
           :key="algo"
           :class="displayResult.get(algo)?.class"
         >
-          {{ displayResult.get(algo)?.cpu ?? 'N/A' }}
+          <span
+            v-if="!Number.isNaN(displayResult.get(algo)?.cpu)"
+          >
+            {{ displayResult.get(algo)?.cpu ?.toFixed(2) }}
+
+            <span class="text-overline">%</span>
+          </span>
+          <span v-else>N/A</span>
         </td>
       </tr>
       <!-- memory usage  -->

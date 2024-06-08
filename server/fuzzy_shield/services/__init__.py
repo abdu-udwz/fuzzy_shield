@@ -47,7 +47,27 @@ def on_shutdown(app: FastAPI):
 def schedule_task(task: Task):
     task_id = task.task_id
     print(f"Processing task {task_id}...")
+    persist_task(task)
+
+    algos = ALGORITHMS.keys()
+
+    for algo in algos:
+        algo_scorer_function: function = getattr(scorer, algo)
+
+        if task.sqli and getattr(task, algo):
+            f = process_pool.submit(
+                algo_scorer_function, task.text, sqli_set, task_id=task_id, is_sqli=True, algo=algo)
+            f.add_done_callback(handle_task_finished)
+
+        if task.xss and getattr(task, algo):
+            f = process_pool.submit(
+                algo_scorer_function, task.text, xss_set, task_id=task_id, is_sqli=False, algo=algo)
+            f.add_done_callback(handle_task_finished)
+
+
+def persist_task(task: Task):
     with RedisBlocking.from_url(str(config.redis_url), decode_responses=True) as r:
+        task_id = task.task_id
         r.hset(task_id, mapping=task.model_dump())
         r.zadd(sets.main, {task_id: task.created_at.timestamp()})
         r.zadd(sets.main_incomplete, {task_id: task.created_at.timestamp()})
@@ -56,19 +76,6 @@ def schedule_task(task: Task):
                    task_id: task.created_at.timestamp()})
             r.zadd(sets.collection_incomplete(task.collection),
                    {task_id: task.created_at.timestamp()})
-
-        algos = ALGORITHMS.keys()
-
-        for algo in algos:
-            if task.sqli and getattr(task, algo):
-                f = process_pool.submit(
-                    getattr(scorer, algo), task.text, sqli_set, task_id=task_id, is_sqli=True, algo=algo)
-                f.add_done_callback(handle_task_finished)
-
-            if task.xss and getattr(task, algo):
-                f = process_pool.submit(
-                    getattr(scorer, algo), task.text, xss_set, task_id=task_id, is_sqli=False, algo=algo)
-                f.add_done_callback(handle_task_finished)
 
 
 def handle_task_finished(worker_future: concurrent.futures.Future):

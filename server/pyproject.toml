@@ -15,6 +15,7 @@ pydantic = "^2.7.1"
 pydantic-settings = "^2.2.1"
 pandas = "^2.2.2"
 redis = "^5.0.4"
+psutil = "^5.9.8"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
