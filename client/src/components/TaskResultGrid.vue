@@ -67,11 +67,10 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
 <template>
   <VTable
     class="task-result-grid"
-    density="compact"
   >
     <thead>
       <tr>
-        <th style="width: 0.2em;" />
+        <th style="max-width: 0.1em;" />
         <th
           v-for="value, key in rawAlgorithms"
           :key="key"
@@ -85,7 +84,7 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
     <tbody>
       <!-- score row -->
       <tr>
-        <td />
+        <td style="max-width: 10px;" />
         <td
           v-for="algo in algorithms"
           :key="algo"
