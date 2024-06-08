@@ -105,10 +105,11 @@ function onRowClicked(event: PointerEvent, payload: any) {
 }
 
 const {algorithms} = useAlgorithms()
+type Attack = "sqli" | "xss"
+type PrefixKey = `${keyof typeof algorithms}_${Attack}`
+type ScoreKey = `${PrefixKey}_score`
 
-type ScoreKey = `${keyof typeof algorithms}_${"sqli" | "xss"}_score`
-
-const scoreKeys: ScoreKey[] = [] ;
+const scoreKeys: Array<ScoreKey> = [] ;
 (['sqli', 'xss'] as const).forEach(attack => {
   Object.keys(algorithms).forEach((algo) => {
     scoreKeys.push(`${algo}_${attack}_score` as unknown as ScoreKey)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
-  modelValue?: number;
+  modelValue?: number | null;
 }>();
 
 // const color = computed(() => {
@@ -20,6 +20,15 @@ const color = computed(() => {
 
   return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
 });
+
+const formattedValue = computed(() => {
+  if (props.modelValue == null || Number.isNaN(props.modelValue) || props.modelValue === -1) {
+    return undefined
+  }
+
+
+  return props.modelValue.toFixed(0)
+})
 </script>
 
 <template>
@@ -27,15 +36,15 @@ const color = computed(() => {
     width="2"
     size="small"
     :color="color"
-    :model-value="modelValue"
+    :model-value="modelValue == null || Number.isNaN(modelValue) ? undefined : modelValue"
     v-bind="$attrs"
   >
     <span
-      v-if="modelValue"
+      v-if="modelValue != null"
       class="text-caption"
       style="font-size: 7pt"
-    >{{
-      modelValue
-    }}</span>
+    >
+      {{ formattedValue }}
+    </span>
   </VProgressCircular>
 </template>

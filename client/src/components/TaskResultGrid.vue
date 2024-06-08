@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import TimeChip from './TimeChip.vue';
-import useAlgorithms from '@/composables/algorithms'
+import useAlgorithms, { type ScorerAlgorithm, type ScorerAlgorithmProperty} from '@/composables/algorithms'
 import ScoreProgress from './ScoreProgress.vue';
 
 import { TaskRaw } from '@/interfaces/task';
@@ -15,8 +15,6 @@ const props = defineProps<{
 const task = computed(() => props.modelValue)
 
 const {algorithms: rawAlgorithms} = useAlgorithms()
-
-type ScorerAlgorithm = keyof typeof rawAlgorithms
 
 const algorithms = computed(() => Object.keys(rawAlgorithms) as unknown as ScorerAlgorithm[])
 
@@ -46,16 +44,15 @@ const displayResult = computed(() => {
   return algoValuesMap
 })
 
-function getPropertyValue(algo: ScorerAlgorithm, property: string): number {
+function getPropertyValue(algo: ScorerAlgorithm, property:ScorerAlgorithmProperty ): number {
   if (props.disabled) {
     return NaN
   }
 
-  const prefix = `${algo}_${props.xss ? 'xss' : 'sqli'}_`
-  const propertyKey = prefix + property
-  // @ts-expect-error
+  const prefix = `${algo}_${props.xss ? 'xss' : 'sqli'}_` as const
+  const propertyKey = `${prefix}${property}` as const
   let value =task.value[propertyKey] as unknown as number
-  if (value === 0 && property !== 'score') {
+  if (value === -1) {
     value = NaN
   }
   return value
@@ -96,7 +93,7 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
         >
           <ScoreProgress
             :indeterminate="!disabled && !isAlgorithmDisabled(algo) && !displayResult.get(algo)?.time"
-            :model-value="disabled ? 0 : displayResult.get(algo)?.score"
+            :model-value="disabled ? null : displayResult.get(algo)?.score"
           />
         </td>
       </tr>
@@ -148,7 +145,6 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
             :model-value="displayResult.get(algo)?.memory ?? 0"
           />
           <span v-else>N/A</span>
-          <!-- {{ displayResult.get(algo)?.memory ?? 'N/A' }} -->
         </td>
       </tr>
     </tbody>
