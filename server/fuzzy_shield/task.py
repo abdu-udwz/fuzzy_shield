@@ -8,7 +8,7 @@ TASK_STATUS = Literal["queued", "partial", "completed"]
 
 
 class Task(BaseModel):
-    task_id: UUID4 = Field(default_factory=lambda: uuid4().hex, frozen=True)
+    task_id: str = Field(default_factory=lambda: uuid4().hex, frozen=True)
     text: str
     status: TASK_STATUS = "queued"
 
