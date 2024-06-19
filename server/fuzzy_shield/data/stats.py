@@ -30,7 +30,7 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
 
     info_sheets = []
 
-    def compute_algorithm_stats(prefix: str):
+    def compute_algorithm_stats(prefix: str, name_prefix: str):
         threshold = getattr(config, prefix)
 
         score_col = f'{prefix}_score'
@@ -52,7 +52,7 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
 
         algo_subset = df[['text', score_col, time_col, cpu_col,
                           memory_col, 'designated_result', result_col, fp_col, fn_col, match_col]]
-        info_sheets.append((f'{prefix} results', algo_subset))
+        info_sheets.append((f'{name_prefix} results', algo_subset))
 
         algo_subset = algo_subset.copy()
 
@@ -63,9 +63,8 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
         failure_set = algo_subset[(
             algo_subset[result_col] != algo_subset['designated_result'])].copy()
 
-        info_sheets.append((f'{prefix} S results', success_set))
-
-        info_sheets.append((f'{prefix} F results', failure_set))
+        info_sheets.append((f'{name_prefix} S results', success_set))
+        info_sheets.append((f'{name_prefix} F results', failure_set))
 
         stats = algo_subset.describe().copy()
         stats.drop(columns=['designated_result',
@@ -93,7 +92,7 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
         stats.loc['False negative overall percentage'] = fn_count / \
             len(df) * 100
 
-        info_sheets.append((f'{prefix} STATS', stats))
+        info_sheets.append((f'{name_prefix} STATS', stats))
 
         success_set = success_set.copy()
         success_set.drop(
@@ -104,14 +103,16 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
                          result_col, fp_col, fn_col], inplace=True)
 
         info_sheets.append(
-            (f'{prefix} S STATS', success_set.describe()))
-        info_sheets.append((f'{prefix} F STATS', failure_set.describe()))
+            (f'{name_prefix} S STATS', success_set.describe()))
+        info_sheets.append((f'{name_prefix} F STATS', failure_set.describe()))
 
     for algo in config.get_enabled_algorithms():
         if config.sqli:
-            compute_algorithm_stats(f'{algo}_sqli')
+            compute_algorithm_stats(
+                f'{algo}_sqli', f'{Algorithms.get_shortcut(algo)} SQLi')
         if config.xss:
-            compute_algorithm_stats(f'{algo}_xss')
+            compute_algorithm_stats(
+                f'{algo}_xss', f'{Algorithms.get_shortcut(algo)} XSS')
 
     with pd.ExcelWriter(f'./datasets/stats/{config.collection}.xlsx', engine='xlsxwriter') as writer:
         df.to_excel(writer, sheet_name='Results', index=False)

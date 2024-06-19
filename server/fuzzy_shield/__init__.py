@@ -18,6 +18,18 @@ class Algorithms:
         "score", 'time', 'memory', 'cpu', 'match']
 
     @staticmethod
+    def get_shortcut(algo: TScorerAlgorithm) -> str:
+        match algo:
+            case "hamming":
+                return 'H.D'
+            case 'naive':
+                return 'N.A'
+            case 'levenshtein_ratio':
+                return 'L.R'
+            case 'levenshtein_sort':
+                return 'L.S'
+
+    @staticmethod
     def properties(algo: TScorerAlgorithm | None = None) -> list[TScorerAlgorithmProperty]:
         return Algorithms.sqli_properties(algo) + Algorithms.xss_properties(algo)
 
