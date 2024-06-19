@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const task = computed(() => props.modelValue)
 
+
 const {algorithms: rawAlgorithms} = useAlgorithms()
 
 const algorithms = computed(() => Object.keys(rawAlgorithms) as unknown as ScorerAlgorithm[])
@@ -23,6 +24,7 @@ interface AlgorithmData {
   time: number
   cpu: number
   memory: number
+  match?: string
   class?: Record<string, any> | string[]
 }
 
@@ -62,6 +64,15 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
   return !task.value[algo]
 }
 
+// match text dialog
+const topMatchDialog = ref(false)
+const topMatchAlgorithm = ref<ScorerAlgorithm | null>()
+
+function showTopMatchDialog(algo: ScorerAlgorithm) {
+  topMatchAlgorithm.value = algo
+  topMatchDialog.value = true
+}
+
 </script>
 
 <template>
@@ -93,6 +104,7 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
           <ScoreProgress
             :indeterminate="!disabled && !isAlgorithmDisabled(algo) && !displayResult.get(algo)?.time"
             :model-value="disabled ? null : displayResult.get(algo)?.score"
+            @click="showTopMatchDialog(algo)"
           />
         </td>
       </tr>
@@ -148,6 +160,17 @@ function isAlgorithmDisabled(algo: ScorerAlgorithm):boolean {
       </tr>
     </tbody>
   </VTable>
+
+  <VDialog v-model="topMatchDialog" width="70em">
+    <VCard>
+      <VCardTitle>{{ topMatchAlgorithm }}</VCardTitle>
+      <VCardText>Top matching result: <br> {{ topMatchAlgorithm == null ? null : getPropertyValue(topMatchAlgorithm, 'match') }}</VCardText>
+      <VCardActions>
+        <VSpacer></VSpacer>
+        <VBtn @click="topMatchDialog = false">Close</VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 

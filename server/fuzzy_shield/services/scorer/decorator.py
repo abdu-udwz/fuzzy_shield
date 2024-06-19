@@ -23,7 +23,7 @@ def scorer_profiler(func: Callable):
         is_sqli = kwargs["is_sqli"]
         algo = kwargs["algo"]
 
-        score, execution_time, cpu, memory = run_and_profile_scorer(
+        score, execution_time, cpu, memory, match = run_and_profile_scorer(
             func, *args)
         execution_time = execution_time * 1000
 
@@ -34,13 +34,14 @@ def scorer_profiler(func: Callable):
                 f"{algo}_{type_slug}_score": score,
                 f"{algo}_{type_slug}_time": execution_time,
                 f"{algo}_{type_slug}_cpu": cpu,
-                f"{algo}_{type_slug}_memory": memory
+                f"{algo}_{type_slug}_memory": memory,
+                f"{algo}_{type_slug}_match": match
             }))
 
     return wrapper
 
 
-def run_and_profile_scorer(scorer: Callable, text: str, choice: list[str]) -> tuple[float, float, float, float]:
+def run_and_profile_scorer(scorer: Callable, text: str, choice: list[str]) -> tuple[float, float, float, float, str]:
     ps = psutil.Process()
 
     tracemalloc.start()
@@ -54,7 +55,9 @@ def run_and_profile_scorer(scorer: Callable, text: str, choice: list[str]) -> tu
     after_time = time.time()
 
     score = 0
+    match = None
     if result:
+        match = result[0]
         score = result[1]
 
     current_mem, peak_mem = tracemalloc.get_traced_memory()
@@ -74,4 +77,4 @@ def run_and_profile_scorer(scorer: Callable, text: str, choice: list[str]) -> tu
         # print(execution_time, real_execution_time, score, result[0])
         cpu_percentage = 100
 
-    return score, real_execution_time, cpu_percentage, peak_mem
+    return score, real_execution_time, cpu_percentage, peak_mem, match

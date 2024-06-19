@@ -38,44 +38,52 @@ class Task(BaseModel):
     hamming_sqli_time: float = -1
     hamming_sqli_cpu: float = -1
     hamming_sqli_memory: float = -1
+    hamming_sqli_match: str = ""
 
     hamming_xss_score: float = -1
     hamming_xss_time: float = -1
     hamming_xss_cpu: float = -1
     hamming_xss_memory: float = -1
+    hamming_xss_match: str = ''
 
     naive: int = 1
     naive_sqli_score: float = -1
     naive_sqli_time: float = -1
     naive_sqli_cpu: float = -1
     naive_sqli_memory: float = -1
+    naive_sqli_match: str = ''
 
     naive_xss_score: float = -1
     naive_xss_time: float = -1
     naive_xss_cpu: float = -1
     naive_xss_memory: float = -1
+    naive_xss_match: str = ''
 
     levenshtein_ratio: int = 1
     levenshtein_ratio_sqli_score: float = -1
     levenshtein_ratio_sqli_time: float = -1
     levenshtein_ratio_sqli_cpu: float = -1
     levenshtein_ratio_sqli_memory: float = -1
+    levenshtein_ratio_sqli_match: str = ''
 
     levenshtein_ratio_xss_score: float = -1
     levenshtein_ratio_xss_time: float = -1
     levenshtein_ratio_xss_cpu: float = -1
     levenshtein_ratio_xss_memory: float = -1
+    levenshtein_ratio_xss_match: str = ''
 
     levenshtein_sort: int = 1
     levenshtein_sort_sqli_score: float = -1
     levenshtein_sort_sqli_time: float = -1
     levenshtein_sort_sqli_cpu: float = -1
     levenshtein_sort_sqli_memory: float = -1
+    levenshtein_sort_sqli_match: str = ''
 
     levenshtein_sort_xss_score: float = -1
     levenshtein_sort_xss_time: float = -1
     levenshtein_sort_xss_cpu: float = -1
     levenshtein_sort_xss_memory: float = -1
+    levenshtein_sort_xss_match: str = ''
 
 
 class TaskCollectionResponse(BaseModel):

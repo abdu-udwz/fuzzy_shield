@@ -12,6 +12,6 @@ export default function useAlgorithms(){
 }
 
 export type ScorerAlgorithm = keyof typeof algorithms
-export type ScorerAlgorithmProperty = 'score' |  'time' | 'cpu' | 'memory'
+export type ScorerAlgorithmProperty = 'score' |  'time' | 'cpu' | 'memory' | 'match'
 
 
