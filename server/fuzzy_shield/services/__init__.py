@@ -5,7 +5,7 @@ import pathlib
 
 from redis import Redis as RedisBlocking
 from fastapi import FastAPI
-from fuzzy_shield import ALGORITHMS, RedisSets as sets
+from fuzzy_shield import Algorithms, RedisSets as sets
 from fuzzy_shield.task import Task
 from fuzzy_shield.config import Config
 from fuzzy_shield.services import status_updater
@@ -49,7 +49,7 @@ def schedule_task(task: Task):
     print(f"Processing task {task_id}...")
     persist_task(task)
 
-    algos = ALGORITHMS.keys()
+    algos = Algorithms.algorithms
 
     for algo in algos:
         algo_scorer_function: function = getattr(scorer, algo)

@@ -2,7 +2,7 @@ import asyncio
 import logging
 from redis.asyncio import Redis
 
-from fuzzy_shield import RedisSets, ALGORITHMS
+from fuzzy_shield import RedisSets, Algorithms
 from fuzzy_shield.dependencies.redis import redis_pool
 from fuzzy_shield.task import Task, TASK_STATUS
 from .queues import INTERNAL_UPDATES_QUEUE, EXTERNAL_UPDATES_QUEUE
@@ -71,11 +71,9 @@ async def loop():
 
 
 def compute_task_status(task: Task) -> TASK_STATUS:
-    algos = ALGORITHMS.keys()
-
     enabled_algo = set()
 
-    for algo in algos:
+    for algo in Algorithms.algorithms:
         algo_enabled = getattr(task, algo)
         if algo_enabled:
             enabled_algo.add(algo)

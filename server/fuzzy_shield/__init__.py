@@ -1,15 +1,50 @@
 
 import sys
 import logging
+from typing_extensions import Literal
 
 collection_prefix = "fuzzy_collection_"
 
-ALGORITHMS = {
-    "hamming": "Hamming distance",
-    "naive": "Naive Algo",
-    "levenshtein_ratio": "Levenshtein ratio",
-    "levenshtein_sort": "Levenshtein sort"
-}
+TScorerAlgorithm = Literal["hamming",    "naive",
+                           "levenshtein_ratio",    "levenshtein_sort"]
+TScorerAlgorithmProperty = Literal["score", 'time', 'memory', 'cpu', 'match']
+
+
+class Algorithms:
+
+    algorithms: list[TScorerAlgorithm] = ["hamming",    "naive",
+                                          "levenshtein_ratio",    "levenshtein_sort"]
+    algorithm_properties: TScorerAlgorithmProperty = [
+        "score", 'time', 'memory', 'cpu', 'match']
+
+    @staticmethod
+    def properties(algo: TScorerAlgorithm | None = None) -> list[TScorerAlgorithmProperty]:
+        return Algorithms.sqli_properties(algo) + Algorithms.xss_properties(algo)
+
+    @staticmethod
+    def sqli_properties(algo: TScorerAlgorithm | None = None) -> list[TScorerAlgorithmProperty]:
+        return Algorithms.__properties(algo, 'sqli')
+
+    @staticmethod
+    def xss_properties(algo: TScorerAlgorithm | None = None) -> list[TScorerAlgorithmProperty]:
+        return Algorithms.__properties(algo, 'xss')
+
+    @staticmethod
+    def __properties(algo: TScorerAlgorithm | None = None, attack: str = 'sqli') -> list[TScorerAlgorithmProperty]:
+        props = []
+        algos_to_use = []
+
+        if algo is None:
+            algos_to_use = Algorithms.algorithms
+        else:
+            algos_to_use = [algo]
+
+        for _algo in algos_to_use:
+            for prop in Algorithms.algorithm_properties:
+
+                props.append(f'{_algo}_{attack}_{prop}')
+
+        return props
 
 
 class RedisSets:

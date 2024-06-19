@@ -75,9 +75,6 @@ async def submit_task(request: Request, background_task: BackgroundTasks, r: Red
 
 
 # bulk submit sample tasks
-
-# set sqli or xss
-# algorithm config
 @router.post('/bulk')
 async def schedule_sample(config: BulkTaskRequest) -> None:
     bulk_schedule_sample(config)
