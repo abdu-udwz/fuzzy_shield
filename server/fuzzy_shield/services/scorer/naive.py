@@ -27,7 +27,7 @@ def naive_pattern_match(text, pattern):
                 match = False
                 break
         if match:
-            match_count += 1
+            match_count += m
 
     return match_count
 
