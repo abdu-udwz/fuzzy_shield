@@ -93,7 +93,7 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
         stats.loc['False negative overall percentage'] = fn_count / \
             len(df) * 100
 
-        info_sheets.append((f'{prefix} Stats', stats))
+        info_sheets.append((f'{prefix} STATS', stats))
 
         success_set = success_set.copy()
         success_set.drop(
@@ -104,8 +104,8 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
                          result_col, fp_col, fn_col], inplace=True)
 
         info_sheets.append(
-            (f'{prefix} Successful Stats', success_set.describe()))
-        info_sheets.append((f'{prefix} Failed Stats', failure_set.describe()))
+            (f'{prefix} S STATS', success_set.describe()))
+        info_sheets.append((f'{prefix} F STATS', failure_set.describe()))
 
     for algo in config.get_enabled_algorithms():
         if config.sqli:
@@ -113,8 +113,7 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
         if config.xss:
             compute_algorithm_stats(f'{algo}_xss')
 
-    with pd.ExcelWriter(f'./datasets/stats/{config.collection}.xlsx') as writer:
+    with pd.ExcelWriter(f'./datasets/stats/{config.collection}.xlsx', engine='xlsxwriter') as writer:
         df.to_excel(writer, sheet_name='Results', index=False)
         for (sheetname, sheet) in info_sheets:
-            sheet.to_excel(
-                writer, sheet_name=sheetname)
+            sheet.to_excel(writer, sheet_name=sheetname)
