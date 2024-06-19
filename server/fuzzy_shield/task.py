@@ -98,3 +98,36 @@ class BulkTaskRequest(BaseModel):
     naive: int
     levenshtein_sort: int
     levenshtein_ratio: int
+
+
+class CollectionStatsConfig(BaseModel):
+
+    collection: str
+    sqli: int = 1
+    xss: int = 1
+
+    hamming: int = 1
+    hamming_sqli: Optional[float] = 50
+    hamming_xss: Optional[float] = 50
+
+    naive: int = 1
+    naive_sqli: Optional[float] = 50
+    naive_xss: Optional[float] = 50
+
+    levenshtein_ratio: int = 1
+    levenshtein_ratio_sqli: Optional[float] = 50
+    levenshtein_ratio_xss: Optional[float] = 50
+
+    levenshtein_sort: int = 1
+    levenshtein_sort_sqli: Optional[float] = 50
+    levenshtein_sort_xss: Optional[float] = 50
+
+    def get_disabled_algorithms(self) -> list:
+        from fuzzy_shield import Algorithms
+
+        return list(filter(lambda algo: not getattr(self, algo), list(Algorithms.algorithms)))
+
+    def get_enabled_algorithms(self) -> list:
+        from fuzzy_shield import Algorithms
+
+        return list(filter(lambda algo: getattr(self, algo), list(Algorithms.algorithms)))
