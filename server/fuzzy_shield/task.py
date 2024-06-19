@@ -89,3 +89,12 @@ class Task(BaseModel):
 class TaskCollectionResponse(BaseModel):
     tasks: list[Task]
     count: int
+
+
+class BulkTaskRequest(BaseModel):
+    mode: Literal['sqli', 'xss']
+    collection: str
+    hamming: int
+    naive: int
+    levenshtein_sort: int
+    levenshtein_ratio: int

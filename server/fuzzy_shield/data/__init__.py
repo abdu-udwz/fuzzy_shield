@@ -4,7 +4,7 @@ import math
 import json
 import pandas as pd
 from pathlib import Path
-from fuzzy_shield.task import Task
+from fuzzy_shield.task import Task, BulkTaskRequest
 from fuzzy_shield.services import schedule_task
 
 Path('./datasets/out').mkdir(parents=True, exist_ok=True)
@@ -73,7 +73,6 @@ def prepare_xss(sample_size: float):
             f'XSS datasets is not available, ensure dataset file exists at {raw_set_file.absolute()}')
 
     dataset = pd.read_csv(raw_set_file)
-    print(dataset.head(30))
     raw_stats = dataset.describe()
     raw_stats.loc["Malicious Count"] = dataset[dataset["Label"] == 1].count()
     raw_stats.loc["Safe Count"] = dataset[dataset["Label"] == 0].count()
@@ -167,17 +166,29 @@ def _write_current_output_info(sample_size: float, sqli_sample: int, xss_sample:
         )
 
 
-def bulk_schedule_sample():
-    sqli_sample = pd.read_csv('./datasets/out/sqli-sample.csv')
+def bulk_schedule_sample(config: BulkTaskRequest):
 
-    sqli_tasks = []
+    tasks: list[Task] = []
+
+    text_col = 'Query' if config.mode == 'sqli' else 'Sentence'
 
     def create_task(row):
-        sqli_tasks.append(
-            Task(text=row['Query'], collection='bulk_1', designated_result=row['Label'], xss=0, hamming=0, naive=0))
+        tasks.append(
+            Task(text=row[text_col],
+                 collection=config.collection,
+                 designated_result=row['Label'], xss=config.mode == 'xss',
+                 sqli=config.mode == 'sqli',
+                 hamming=config.hamming,
+                 naive=config.naive,
+                 levenshtein_ratio=config.levenshtein_ratio,
+                 levenshtein_sort=config.levenshtein_sort))
 
-    sqli_sample.apply(create_task, axis=1)
+    if config.mode == 'sqli':
+        sqli_sample = pd.read_csv('./datasets/out/sqli-sample.csv')
+        sqli_sample.apply(create_task, axis=1)
+    else:
+        xss_sample = pd.read_csv('./datasets/out/xss-sample.csv')
+        xss_sample.apply(create_task, axis=1)
 
-    for task in sqli_tasks:
+    for task in tasks:
         schedule_task(task)
-    pass

@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from fuzzy_shield.services import schedule_task
 from fuzzy_shield.data import bulk_schedule_sample
 from fuzzy_shield.dependencies.redis import RedisDep, RedisSetsDep
-from fuzzy_shield.task import Task, TaskCollectionResponse, TASK_STATUS
+from fuzzy_shield.task import Task, TaskCollectionResponse, BulkTaskRequest, TASK_STATUS
 
 router = APIRouter(prefix="/tasks", tags=['tasks'])
 
@@ -76,6 +76,8 @@ async def submit_task(request: Request, background_task: BackgroundTasks, r: Red
 
 # bulk submit sample tasks
 
+# set sqli or xss
+# algorithm config
 @router.post('/bulk')
-async def schedule_sample() -> None:
-    bulk_schedule_sample()
+async def schedule_sample(config: BulkTaskRequest) -> None:
+    bulk_schedule_sample(config)
