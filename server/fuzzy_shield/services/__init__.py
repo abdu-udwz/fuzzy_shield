@@ -13,7 +13,7 @@ from fuzzy_shield.services import scorer
 
 config = Config()
 # Process pool for tasks
-process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=4)
+process_pool = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 
 
 sqli_set: list[str] | None = None

@@ -24,6 +24,9 @@ def hamming_scorer(s1, s2):
     s2 = full_process(s2)
     distance = hamming_distance(s1, s2)
 
+    if len(s1) == 0:
+        return 0
+
     # Convert distance to a similarity score (0-100)
     max_distance = len(s1)  # maximum possible Hamming distance
     score = ((max_distance - distance) / max_distance) * 100

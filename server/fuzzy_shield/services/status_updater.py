@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from redis.asyncio import Redis
 
 from fuzzy_shield import RedisSets, Algorithms
@@ -30,13 +31,19 @@ def uninitialize():
         loop_task.cancel()
 
 
+start_time = None
+
+
 async def loop():
+    global start_time, end_time
     r = Redis.from_pool(redis_pool)
     while True and _app_running:
         try:
             update = await INTERNAL_UPDATES_QUEUE.get()
             logger.debug(f'Internal status updater {update}')
             task_id = update["task_id"]
+            if start_time is None:
+                start_time = time.time()
 
             await r.hset(task_id, mapping=update)
 
@@ -65,6 +72,7 @@ async def loop():
                 })
 
             INTERNAL_UPDATES_QUEUE.task_done()
+            print(time.time() - start_time)
         except Exception as exc:
             logger.exception(
                 "Something went wrong while handling internal status updates")

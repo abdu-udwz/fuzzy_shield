@@ -67,8 +67,8 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
 
         failure_set = algo_subset[(
             algo_subset[result_col] != algo_subset['designated_result'])].copy()
-        fp_set = algo_subset[(algo_subset[fp_col] == 1)].copy()
-        fn_set = algo_subset[(algo_subset[fn_col] == 1)].copy()
+        fp_set = failure_set[(failure_set[fp_col] == 1)]
+        fn_set = failure_set[(failure_set[fn_col] == 1)]
 
         info_sheets.append((f'{name_prefix} F results', failure_set))
         info_sheets.append((f'{name_prefix} FP results', fp_set))
@@ -105,18 +105,10 @@ def compute_stats(tasks: list[Task], config: CollectionStatsConfig):
         success_set = success_set.copy()
         success_set.drop(
             columns=['designated_result', result_col], inplace=True)
-        ss_set.drop(
-            columns=['designated_result', result_col], inplace=True)
-        sm_set.drop(
-            columns=['designated_result', result_col], inplace=True)
 
         failure_set = failure_set.copy()
         failure_set.drop(columns=['designated_result',
                          result_col, fp_col, fn_col], inplace=True)
-        fp_set.drop(columns=['designated_result',
-                             result_col, fp_col, fn_col], inplace=True)
-        fn_set.drop(columns=['designated_result',
-                             result_col, fp_col, fn_col], inplace=True)
 
         info_sheets.append(
             (f'{name_prefix} S STATS', success_set.describe()))
