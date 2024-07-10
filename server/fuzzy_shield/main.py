@@ -19,7 +19,7 @@ config = Config()
 logger = logging.getLogger("fuzzy_shield_app")
 
 # Prepare datasets
-data.initialize()
+data.initialize()  # specify sample sizes
 
 # Webserver initialization
 

@@ -2,7 +2,7 @@
 name = "fuzzy-shield"
 version = "0.1.0"
 description = ""
-authors = ["Abdulhamid <zoubi.abdulhamid@gmail.com>"]
+authors = [""]
 readme = "README.md"
 
 [tool.poetry.dependencies]
